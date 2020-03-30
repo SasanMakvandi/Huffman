@@ -130,9 +130,25 @@ def get_codes(tree: HuffmanTree) -> Dict[int, str]:
     >>> d = get_codes(tree)
     >>> d == {3: "0", 2: "1"}
     True
+    >>> tree1 = HuffmanTree(None, HuffmanTree(3), HuffmanTree(None, HuffmanTree(2), HuffmanTree(4)))
+    >>> d = get_codes(tree1)
+    >>> d == {3: "0", 2: "10", 4: "11"}
+    True
     """
-    # TODO: Implement this function
-    pass
+    result = {}
+    if tree.symbol is None and tree.left is not None:
+        left = get_codes(tree.left)
+        for el in left:
+            left[el] = "0" + left[el]
+        result.update(left)
+    if tree.symbol is None and tree.right is not None:
+        right = get_codes(tree.right)
+        for el in right:
+            right[el] = "1" + right[el]
+        result.update(right)
+    else:
+        return {tree.symbol: ""}
+    return result
 
 
 def number_nodes(tree: HuffmanTree) -> None:
