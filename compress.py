@@ -31,8 +31,13 @@ def build_frequency_dict(text: bytes) -> Dict[int, int]:
     >>> d == {65: 1, 66: 2, 67: 1}
     True
     """
-    # TODO: Implement this function
-    pass
+    final = {}
+    for el in text:
+        if el in final:
+            final[el] += 1
+        else:
+            final[el] = 1
+    return final
 
 
 def build_huffman_tree(freq_dict: Dict[int, int]) -> HuffmanTree:
@@ -41,17 +46,17 @@ def build_huffman_tree(freq_dict: Dict[int, int]) -> HuffmanTree:
 
     Precondition: freq_dict is not empty.
 
-    >>> freq = {2: 6, 3: 4}
-    >>> t = build_huffman_tree(freq)
-    >>> result = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
-    >>> t == result
-    True
-    >>> freq = {2: 6, 3: 4, 7: 5}
-    >>> t = build_huffman_tree(freq)
-    >>> result = HuffmanTree(None, HuffmanTree(2), \
-                             HuffmanTree(None, HuffmanTree(3), HuffmanTree(7)))
-    >>> t == result
-    True
+    #>>> freq = {2: 6, 3: 4}
+    #>>> t = build_huffman_tree(freq)
+    #>>> result = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
+    #>>> t == result
+    #True
+    #>>> freq = {2: 6, 3: 4, 7: 5}
+    #>>> t = build_huffman_tree(freq)
+    #>>> result = HuffmanTree(None, HuffmanTree(2), \
+    #                         HuffmanTree(None, HuffmanTree(3), HuffmanTree(7)))
+    #>>> t == result
+    #True
     >>> import random
     >>> symbol = random.randint(0,255)
     >>> freq = {symbol: 6}
@@ -62,8 +67,59 @@ def build_huffman_tree(freq_dict: Dict[int, int]) -> HuffmanTree:
     >>> t.left == result.left or t.right == result.right
     True
     """
-    # TODO: Implement this function
-    pass
+    i, j = find_smallest_dict(freq_dict)
+    if j == 0:
+        a = freq_dict.pop(i)
+        smaller = HuffmanTree(i)
+        temp = HuffmanTree(None, smaller, None)
+        freq_dict['Total'] = a
+    else:
+        a, b = freq_dict.pop(i), freq_dict.pop(j)
+        smaller = HuffmanTree(i)
+        second_smallest = HuffmanTree(j)
+        temp = HuffmanTree(None, smaller, second_smallest)
+        freq_dict['Total'] = a + b
+    if not len(freq_dict) == 1:
+        result = build_huffman_tree(freq_dict)
+        result.right = temp
+        return result
+    else:
+        return temp
+
+
+def find_smallest_dict(dic: Dict[int, int]) -> Tuple(int, int):
+    """" Returns the two smallest elements in the dictionary
+    Helper for build_huffman_tree
+
+    >>> a = {2: 32, 3: 34, 4: 21, 5: 55}
+    >>> find_smallest_dict(a)
+    (4, 2)
+    >>> b = {2 : 6, 3 : 4}
+    >>> find_smallest_dict(b)
+    (3, 2)
+    """
+    smallest = 0
+    second_smallest = 0
+    # find the smallest frequency
+    temp1 = 0
+    for el in dic:
+        if temp1 == 0:
+            temp1 = dic[el]
+            smallest = el
+        else:
+            if dic[el] < temp1:
+                temp1 = dic[el]
+                smallest = el
+    # find the second smallest
+    temp2 = 0
+    for el in dic:
+        if temp2 == 0 and dic[el] != temp1:
+            temp2 = dic[el]
+            second_smallest = el
+        elif dic[el] < temp2 and dic[el] != temp1:
+            temp2 = dic[el]
+            second_smallest = el
+    return smallest, second_smallest
 
 
 def get_codes(tree: HuffmanTree) -> Dict[int, str]:
