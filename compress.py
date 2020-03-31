@@ -46,17 +46,17 @@ def build_huffman_tree(freq_dict: Dict[int, int]) -> HuffmanTree:
 
     Precondition: freq_dict is not empty.
 
-    #>>> freq = {2: 6, 3: 4}
-    #>>> t = build_huffman_tree(freq)
-    #>>> result = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
-    #>>> t == result
-    #True
-    #>>> freq = {2: 6, 3: 4, 7: 5}
-    #>>> t = build_huffman_tree(freq)
-    #>>> result = HuffmanTree(None, HuffmanTree(2), \
-    #                         HuffmanTree(None, HuffmanTree(3), HuffmanTree(7)))
-    #>>> t == result
-    #True
+    >>> freq = {2: 6, 3: 4}
+    >>> t = build_huffman_tree(freq)
+    >>> result = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
+    >>> t == result
+    True
+    >>> freq = {2: 6, 3: 4, 7: 5}
+    >>> t = build_huffman_tree(freq)
+    >>> result = HuffmanTree(None, HuffmanTree(2), \
+                            HuffmanTree(None, HuffmanTree(3), HuffmanTree(7)))
+    >>> t == result
+    True
     >>> import random
     >>> symbol = random.randint(0,255)
     >>> freq = {symbol: 6}
@@ -184,7 +184,7 @@ def find_internal_nodes(tree: HuffmanTree, starter: 0) -> Dict[int, list]:
     """
     Function finds all the internal nodes in a tree
     Helper function of the number_nodes function
-    :return a dictionary with nodes to each corresponding
+    :return a dictionary with nodes to each corresponding level
     >>> leftleft = HuffmanTree(None, HuffmanTree(20), HuffmanTree(71))
     >>> left = HuffmanTree(None, HuffmanTree(3), leftleft)
     >>> right = HuffmanTree(None, HuffmanTree(9), HuffmanTree(10))
@@ -226,8 +226,32 @@ def avg_length(tree: HuffmanTree, freq_dict: Dict[int, int]) -> float:
     >>> avg_length(tree, freq)  # (2*2 + 7*2 + 1*1) / (2 + 7 + 1)
     1.9
     """
-    # TODO: Implement this function
-    pass
+    total_num_freq = 0
+    for num in freq_dict:
+        total_num_freq += freq_dict[num]
+    total_bit = total_bits(tree, freq_dict, 0)
+    return total_bit/total_num_freq
+
+
+def total_bits(tree: HuffmanTree, freq_dict: Dict[int, int], curr_level: int):
+    """Return the total number of bits in this tree
+    Helper function for avg_length
+    >>> freq = {3: 2, 2: 7, 9: 1}
+    >>> left = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
+    >>> right = HuffmanTree(9)
+    >>> tree = HuffmanTree(None, left, right)
+    >>> total_bits(tree, freq, 0)
+    19
+    """
+    total_bit = 0
+    if tree.symbol is not None:
+        total_bit = freq_dict[tree.symbol] * curr_level
+    else:
+        if tree.left is not None:
+            total_bit += total_bits(tree.left, freq_dict, (curr_level + 1))
+        if tree.right is not None:
+            total_bit += total_bits(tree.right, freq_dict, (curr_level + 1))
+    return total_bit
 
 
 def compress_bytes(text: bytes, codes: Dict[int, str]) -> bytes:
