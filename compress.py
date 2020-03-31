@@ -154,20 +154,60 @@ def get_codes(tree: HuffmanTree) -> Dict[int, str]:
 def number_nodes(tree: HuffmanTree) -> None:
     """ Number internal nodes in <tree> according to postorder traversal. The
     numbering starts at 0.
-
-    >>> left = HuffmanTree(None, HuffmanTree(3), HuffmanTree(2))
+    >>> leftleft = HuffmanTree(None, HuffmanTree(4), HuffmanTree(12))
+    >>> left = HuffmanTree(None, leftleft, HuffmanTree(2))
     >>> right = HuffmanTree(None, HuffmanTree(9), HuffmanTree(10))
     >>> tree = HuffmanTree(None, left, right)
     >>> number_nodes(tree)
-    >>> tree.left.number
+    >>> tree.left.left.number
     0
-    >>> tree.right.number
+    >>> tree.left.number
     1
-    >>> tree.number
+    >>> tree.right.number
     2
+    >>> tree.number
+    3
     """
-    # TODO: Implement this function
-    pass
+    curr_number = 0
+    list_of_nodes = []
+    dict_of_nodes = find_internal_nodes(tree, 0)
+    for el in dict_of_nodes:
+        list_of_nodes.append(el)
+    list_of_nodes.reverse()
+    for el in list_of_nodes:
+        for tree in dict_of_nodes[el]:
+            tree.number = curr_number
+            curr_number += 1
+
+
+def find_internal_nodes(tree: HuffmanTree, starter: 0) -> Dict[int, list]:
+    """
+    Function finds all the internal nodes in a tree
+    Helper function of the number_nodes function
+    :return a dictionary with nodes to each corresponding
+    >>> leftleft = HuffmanTree(None, HuffmanTree(20), HuffmanTree(71))
+    >>> left = HuffmanTree(None, HuffmanTree(3), leftleft)
+    >>> right = HuffmanTree(None, HuffmanTree(9), HuffmanTree(10))
+    >>> tree = HuffmanTree(None, left, right)
+    >>> find_internal_nodes(tree, 0)
+    {0: [tree], 1: [left, right], 2: [leftleft]}
+    """
+    result = {}
+    if tree.symbol is None:
+        result[starter] = [tree]
+        left = find_internal_nodes(tree.left, starter + 1)
+        right = find_internal_nodes(tree.right, starter + 1)
+        for el in left:
+            if el in result:
+                result[el].extend(left[el])
+            else:
+                result[el] = left[el]
+        for el in right:
+            if el in result:
+                result[el].extend(right[el])
+            else:
+                result[el] = right[el]
+    return result
 
 
 def avg_length(tree: HuffmanTree, freq_dict: Dict[int, int]) -> float:
