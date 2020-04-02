@@ -266,12 +266,37 @@ def compress_bytes(text: bytes, codes: Dict[int, str]) -> bytes:
     >>> [byte_to_bits(byte) for byte in result]
     ['10111000']
     >>> text = bytes([1, 2, 1, 0, 2])
+    >>> d = {0: "0", 1: "10", 2: "11"}
     >>> result = compress_bytes(text, d)
     >>> [byte_to_bits(byte) for byte in result]
     ['10111001', '10000000']
     """
-    # TODO: Implement this function
-    pass
+    result = []
+    curr_text = ''
+    for el in text:
+        if not (len(curr_text)) + (len(codes[el])) >= 8:
+            curr_text += codes[el]
+        else:
+            diff = (len(curr_text) + len(codes[el])) - 8
+            curr_text += (codes[el][:diff])
+            result.append(curr_text)
+            curr_text = (codes[el][diff:])
+    if not result:
+        while len(curr_text) != 8:
+            curr_text += '0'
+        temp = int(curr_text, 2)
+        return bytes([temp])
+    else:
+        if curr_text not in result:
+            result.append(curr_text)
+        final = []
+        for el in result:
+            if len(el) != 8:
+                while len(el) != 8:
+                    el += '0'
+            final.append(int(el, 2))
+        return bytes(final)
+
 
 
 def tree_to_bytes(tree: HuffmanTree) -> bytes:
