@@ -67,36 +67,56 @@ def build_huffman_tree(freq_dict: Dict[int, int]) -> HuffmanTree:
     >>> t.left == result.left or t.right == result.right
     True
     """
-    i, j = find_smallest_dict(freq_dict)
-    if j == 0:
-        a = freq_dict.pop(i)
-        smaller = HuffmanTree(i)
-        temp = HuffmanTree(None, smaller, None)
-        freq_dict['Total'] = a
-    else:
-        a, b = freq_dict.pop(i), freq_dict.pop(j)
-        smaller = HuffmanTree(i)
-        second_smallest = HuffmanTree(j)
-        temp = HuffmanTree(None, smaller, second_smallest)
-        freq_dict['Total'] = a + b
-    if not len(freq_dict) == 1:
-        result = build_huffman_tree(freq_dict)
-        result.right = temp
-        return result
-    else:
-        return temp
+    if len(freq_dict) == 1:
+        index = 0
+        for el in freq_dict:
+            index = el
+        return HuffmanTree(None, HuffmanTree(index), None)
+
+    freq_dict2 = create_leafs(freq_dict)
+    while len(freq_dict2) != 1:
+        i, j = find_smallest_dict(freq_dict2)
+        smallest = freq_dict2[i][1]
+        second_smallest = freq_dict2[j][1]
+        temp = HuffmanTree(None, smallest, second_smallest)
+        combined_freq = freq_dict2[i][0] + freq_dict2[j][0]
+        sym = str(i) + str(j)
+        freq_dict2[sym] = [combined_freq, temp]
+        freq_dict2.pop(i)
+        freq_dict2.pop(j)
+    index = 0
+    for el in freq_dict2:
+        index = el
+    return freq_dict2[index][1]
 
 
-def find_smallest_dict(dic: Dict[int, int]) -> Tuple(int, int):
+def create_leafs(freq_dict: Dict[int, int]) -> Dict[int, list]:
+    """ Given a frequency dictionary, make leafs for every symbol and then puts
+    the leaf and the frequency in a list and returns a dictionary with symbols
+    as keys
+    Helper for build_huffman_tree
+    >>> a = {2: 32, 3: 34, 4: 21, 5: 55}
+    >>> e1 = HuffmanTree(2)
+    >>> e2 = HuffmanTree(3)
+    >>> e3 = HuffmanTree(4)
+    >>> e4 = HuffmanTree(5)
+    >>> create_leafs(a)
+    {32 : e1, 34: e2, 21: e3,  55: e4}
+    """
+    result = {}
+    for el in freq_dict:
+        tree = HuffmanTree(el)
+        result[el] = [freq_dict[el], tree]
+    return result
+
+
+def find_smallest_dict(dic: Dict[int, list]) -> Tuple[int, int]:
     """" Returns the two smallest elements in the dictionary
     Helper for build_huffman_tree
 
-    >>> a = {2: 32, 3: 34, 4: 21, 5: 55}
+    >>> a = {1 : [32, HuffmanTree(1)], 2 : [34, HuffmanTree(2)], 3 : [21, HuffmanTree(3)], 4: [55, HuffmanTree(4)] }
     >>> find_smallest_dict(a)
-    (4, 2)
-    >>> b = {2 : 6, 3 : 4}
-    >>> find_smallest_dict(b)
-    (3, 2)
+    (3, 1)
     """
     smallest = 0
     second_smallest = 0
@@ -104,20 +124,20 @@ def find_smallest_dict(dic: Dict[int, int]) -> Tuple(int, int):
     temp1 = 0
     for el in dic:
         if temp1 == 0:
-            temp1 = dic[el]
+            temp1 = dic[el][0]
             smallest = el
         else:
-            if dic[el] < temp1:
-                temp1 = dic[el]
+            if dic[el][0] < temp1:
+                temp1 = dic[el][0]
                 smallest = el
     # find the second smallest
     temp2 = 0
     for el in dic:
-        if temp2 == 0 and dic[el] != temp1:
-            temp2 = dic[el]
+        if temp2 == 0 and el != smallest:
+            temp2 = dic[el][0]
             second_smallest = el
-        elif dic[el] < temp2 and dic[el] != temp1:
-            temp2 = dic[el]
+        elif dic[el][0] < temp2 and el != smallest:
+            temp2 = dic[el][0]
             second_smallest = el
     return smallest, second_smallest
 
@@ -291,12 +311,10 @@ def compress_bytes(text: bytes, codes: Dict[int, str]) -> bytes:
             result.append(curr_text)
         final = []
         for el in result:
-            if len(el) != 8:
-                while len(el) != 8:
-                    el += '0'
+            while len(el) != 8:
+                el += '0'
             final.append(int(el, 2))
         return bytes(final)
-
 
 
 def tree_to_bytes(tree: HuffmanTree) -> bytes:
@@ -325,8 +343,48 @@ def tree_to_bytes(tree: HuffmanTree) -> bytes:
     [0, 104, 0, 101, 0, 119, 0, 114, 1, 0, 1, 1, 0, 100, 0, 111, 0, 108,\
     1, 3, 1, 2, 1, 4]
     """
-    # TODO: Implement this function
-    pass
+    return bytes(find_bits(tree))
+
+
+def find_bits(tree: HuffmanTree) -> list:
+    """Returns the bits in a list form to help tree_to_bytes
+
+    # >>> left = HuffmanTree(None, HuffmanTree(3, None, None), \
+    # HuffmanTree(2, None, None))
+    # >>> right = HuffmanTree(5)
+    # >>> tree = HuffmanTree(None, left, right)
+    # >>> number_nodes(tree)
+    # >>> find_bits(tree)
+    # [0, 3, 0, 2, 1, 0, 0, 5]
+    >>> build_frequency_dict(b"helloworld")
+    >>> tree = build_huffman_tree(build_frequency_dict(b"helloworld"))
+    >>> number_nodes(tree)
+    >>> tree
+    >>> find_internal_nodes(tree, 0)
+    >>> find_bits(tree)
+    [0, 104, 0, 101, 0, 119, 0, 114, 1, 0, 1, 1, 0, 100, 0, 111, 0, 108,\
+    1, 3, 1, 2, 1, 4]
+    """
+    curr = []
+    if tree.left.symbol is not None:
+        curr.append(0)
+        curr.append(tree.left.symbol)
+    else:
+        curr.append(1)
+        curr.append(tree.left.number)
+    if tree.right.symbol is not None:
+        curr.append(0)
+        curr.append(tree.right.symbol)
+    else:
+        curr.append(1)
+        curr.append(tree.right.number)
+    if tree.left.symbol is None:
+        left_batch = find_bits(tree.left)
+        curr = left_batch + curr
+    if tree.right.symbol is None:
+        right_batch = find_bits(tree.right)
+        curr = right_batch + curr
+    return curr
 
 
 def compress_file(in_file: str, out_file: str) -> None:
@@ -364,9 +422,29 @@ def generate_tree_general(node_lst: List[ReadNode],
     HuffmanTree(None, HuffmanTree(None, HuffmanTree(10, None, None), \
 HuffmanTree(12, None, None)), \
 HuffmanTree(None, HuffmanTree(5, None, None), HuffmanTree(7, None, None)))
+    >>> leftleft = HuffmanTree(None, HuffmanTree(20), HuffmanTree(71))
+    >>> left = HuffmanTree(None, HuffmanTree(3), leftleft)
+    >>> right = HuffmanTree(None, HuffmanTree(9), HuffmanTree(10))
+    >>> tree = HuffmanTree(None, left, right)
+    >>> generate_tree_general([ReadNode(1, 2, 1, 3), ReadNode(0, 4, 0, 12), ReadNode(1, 1, 0, 2), ReadNode(0, 9, 0, 10)], 0)
+    HuffmanTree(None, HuffmanTree(None, HuffmanTree(None, \
+HuffmanTree(4, None, None), HuffmanTree(12, None, None)), \
+HuffmanTree(2, None, None)), HuffmanTree(None, HuffmanTree(9, None, None), \
+HuffmanTree(10, None, None)))
     """
-    # TODO: Implement this function
-    pass
+    curr_node = node_lst[root_index]
+    tree = HuffmanTree()
+    if curr_node.l_type == 0:
+        tree.left = HuffmanTree(curr_node.l_data)
+    else:
+        treex = generate_tree_general(node_lst, curr_node.l_data)
+        tree.left = treex
+    if curr_node.r_type == 0:
+        tree.right = HuffmanTree(curr_node.r_data)
+    else:
+        treey = generate_tree_general(node_lst, curr_node.r_data)
+        tree.right = treey
+    return tree
 
 
 def generate_tree_postorder(node_lst: List[ReadNode],
